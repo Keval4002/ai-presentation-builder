@@ -1,27 +1,19 @@
-// src/contexts/SidebarProvider.jsx
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useState, useContext } from 'react';
 
+// 1. Create the Context
 const SidebarContext = createContext();
 
-export const useSidebar = () => {
-  const context = useContext(SidebarContext);
-  if (!context) {
-    throw new Error('useSidebar must be used within a SidebarProvider');
-  }
-  return context;
-};
-
-export const SidebarProvider = ({ children }) => {
+// 2. Create the Provider Component
+export function SidebarProvider({ children }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const toggleSidebar = () => {
-    setIsCollapsed(!isCollapsed);
+    setIsCollapsed(prev => !prev);
   };
 
   const value = {
     isCollapsed,
-    setIsCollapsed,
-    toggleSidebar
+    toggleSidebar,
   };
 
   return (
@@ -29,4 +21,13 @@ export const SidebarProvider = ({ children }) => {
       {children}
     </SidebarContext.Provider>
   );
+}
+
+// 3. Create a custom hook for easy access to the context
+export const useSidebar = () => {
+  const context = useContext(SidebarContext);
+  if (context === undefined) {
+    throw new Error('useSidebar must be used within a SidebarProvider');
+  }
+  return context;
 };
