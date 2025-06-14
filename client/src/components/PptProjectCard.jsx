@@ -4,6 +4,10 @@ import React from 'react'
 import { MoreVertical } from 'lucide-react';
 
 function ProjectCard({imageUrl, title, lastModified}) {
+
+    // const [showMenu, setShowMenu] = useState(false);
+
+
   return (
     <div className='group w-full rounded-lg overflow-hidden border border-gray-200 bg-white hover:shadow-sm transition-shadow duration-300 ease-in-out'>
 
