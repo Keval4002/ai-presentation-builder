@@ -1,0 +1,30 @@
+<svg viewBox="0 0 400 225" xmlns="http://www.w3.org/2000/svg">
+  <!-- Skyline theme background -->
+  <defs>
+    <linearGradient id="skylineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f0f9ff"/>
+      <stop offset="100%" style="stop-color:#e0f2fe"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="400" height="225" fill="url(#skylineGrad)" rx="16"/>
+  
+  <!-- Skyline silhouette -->
+  <polygon points="60,180 80,160 100,170 120,140 140,150 160,120 180,130 200,110 220,120 240,100 260,110 280,90 300,100 320,80 340,90 360,70 380,80 400,75 400,225 60,225" fill="#0ea5e9" opacity="0.3"/>
+  
+  <!-- Gentle curves and shapes -->
+  <ellipse cx="150" cy="60" rx="60" ry="20" fill="#0284c7" opacity="0.2"/>
+  
+  <!-- Soft typography -->
+  <rect x="80" y="40" width="160" height="8" rx="8" fill="#0c4a6e"/>
+  <rect x="80" y="55" width="120" height="6" rx="6" fill="#0284c7"/>
+  
+  <!-- Cloud-like elements -->
+  <circle cx="300" cy="50" r="15" fill="#0ea5e9" opacity="0.3"/>
+  <circle cx="315" cy="45" r="12" fill="#0ea5e9" opacity="0.3"/>
+  <circle cx="285" cy="45" r="10" fill="#0ea5e9" opacity="0.3"/>
+  
+  <!-- Gentle accent line -->
+  <path d="M60 190 Q150 180 240 185 T380 190" stroke="#0ea5e9" stroke-width="2" fill="none" opacity="0.6"/>
+</svg>

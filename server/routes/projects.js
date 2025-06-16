@@ -74,4 +74,59 @@ router.delete("/:id", async (req, res) => {
 });
 
 
+router.get("/sidebar", async (req, res) => {
+  try {
+    // Example: Fetch recently viewed (latest 5 projects)
+    const recentResult = await pool.query(
+      `SELECT id, title AS name, 
+      CASE 
+        WHEN CURRENT_DATE = updated_at::date THEN 'Today'
+        WHEN (CURRENT_DATE - updated_at::date) = 1 THEN 'Yesterday'
+        ELSE (CURRENT_DATE - updated_at::date) || ' days ago'
+      END AS date
+      FROM projects 
+      ORDER BY updated_at DESC
+      LIMIT 5`
+    );
+
+
+    res.json({
+      recentlyViewed: recentResult.rows,
+      navigation: [
+        { label: "Home", path: "/", icon:"Home" },
+        { label: "Trash", path: "/trash", icon:"Trash2" }
+      ]
+
+    });
+  } catch (err) {
+    console.error("Sidebar data fetch error:", err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+router.get('/user', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, created_at, name, email FROM users LIMIT 1'
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'No user found' });
+    }
+
+    const user = result.rows[0];
+
+    res.json({
+      id: user.id,
+      created_at: user.created_at,
+      name: user.name,
+      email: user.email
+    });
+  } catch (error) {
+    console.error('Error fetching user:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
 export default router;

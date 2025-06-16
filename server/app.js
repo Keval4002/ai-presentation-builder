@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import projectRoutes from "./routes/projects.js"
+import themeRoutes from "./routes/themes.js"
 
 // Load environment variables
 dotenv.config();
@@ -22,6 +23,6 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/projects", projectRoutes);
-
+app.use("/api/themes", themeRoutes);
 
 export default app;

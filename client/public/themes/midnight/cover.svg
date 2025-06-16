@@ -1,0 +1,35 @@
+<svg viewBox="0 0 400 225" xmlns="http://www.w3.org/2000/svg">
+  <!-- Midnight theme background -->
+  <defs>
+    <linearGradient id="midnightGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a"/>
+      <stop offset="100%" style="stop-color:#1e293b"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="400" height="225" fill="url(#midnightGrad)"/>
+  
+  <!-- Professional grid lines -->
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#334155" stroke-width="0.5" opacity="0.3"/>
+    </pattern>
+  </defs>
+  <rect width="400" height="225" fill="url(#grid)"/>
+  
+  <!-- City skyline silhouette -->
+  <polygon points="0,180 40,160 60,170 80,150 100,160 120,140 140,150 160,130 180,140 200,120 220,130 240,110 260,120 280,100 300,110 320,90 340,100 360,80 380,90 400,85 400,225 0,225" fill="#38bdf8" opacity="0.3"/>
+  
+  <!-- Professional typography -->
+  <rect x="60" y="50" width="200" height="12" rx="6" fill="#f1f5f9"/>
+  <rect x="60" y="75" width="160" height="8" rx="4" fill="#e2e8f0"/>
+  <rect x="60" y="95" width="180" height="8" rx="4" fill="#e2e8f0"/>
+  
+  <!-- Accent elements -->
+  <rect x="300" y="40" width="80" height="3" rx="1.5" fill="#38bdf8"/>
+  <rect x="300" y="50" width="60" height="2" rx="1" fill="#38bdf8" opacity="0.7"/>
+  
+  <!-- Professional highlight -->
+  <circle cx="350" cy="160" r="25" fill="#38bdf8" opacity="0.2"/>
+</svg>
