@@ -3,9 +3,41 @@ import { ArrowLeft, Sparkles, FileText, ArrowRight } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ThemeCard from '../components/ThemeCard';
 
+// A fallback in case the API fails, as was in the original code.
+const fallbackThemes = [
+    { slug: 'default-light', name: 'Default Light', primary_color: '#3B82F6', secondary_color: '#10B981', background_color: '#F9FAFB', text_color: '#1F2937', heading_font: 'Inter' },
+    { slug: 'default-dark', name: 'Default Dark', primary_color: '#60A5FA', secondary_color: '#34D399', background_color: '#1F2937', text_color: '#F9FAFB', heading_font: 'Inter' },
+];
+
 const ThemeSelectionPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
+
+  const sendPptDetails = async (slug, requestData) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/themes/${slug}/details`,
+        {
+          method: 'POST',
+          // --- CORRECTED ---
+          // Standard casing for the 'Content-Type' header.
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestData)
+        }
+      );
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Failed to send ppt details');
+      }
+
+      const data = await res.json();
+      return data;
+
+    } catch (error) {
+      console.error('Error sending PPT details:', error.message);
+      alert(`Error sending PPT details: ${error.message}`);
+    }
+  }
 
   const { mode = 'ai', initialSlideCount = 5 } = location.state || {};
 
@@ -60,7 +92,7 @@ const ThemeSelectionPage = () => {
         for (let i = current.length; i < newCount; i++) {
           current.push({
             id: i + 1,
-            text: i === 0 ? 'Introduction' : i === newCount - 1 ? 'Conclusion' : `Slide ${i + 1}`
+            text: i === newCount - 1 ? 'Conclusion' : `Slide ${i + 1}`
           });
         }
       } else {
@@ -70,13 +102,11 @@ const ThemeSelectionPage = () => {
     }
   };
 
-  
-
   const updateOutlineItem = (id, text) => {
     setOutlineItems(outlineItems.map(item => item.id === id ? { ...item, text } : item));
   };
 
-  const handleProceed = () => {
+  const handleProceed = async () => {
     if (!selectedTheme) {
       alert('Please select a theme');
       return;
@@ -91,14 +121,24 @@ const ThemeSelectionPage = () => {
     }
 
     setIsLoading(true);
+
+    // --- CORRECTED ---
+    // This object now correctly matches what the backend expects in `req.body`.
+    // The `theme` identifier (`slug`) is passed via the URL, not the body.
     const requestData = {
-      theme: selectedTheme.slug,
       mode,
       slideCount,
       ...(mode === 'ai' ? { prompt } : { outline: outlineItems.map(i => i.text) })
     };
 
-    navigate('/editor/new', { state: { projectData: requestData, selectedTheme } });
+    const result = await sendPptDetails(selectedTheme.slug, requestData);
+
+    if (result?.projectId) {
+      // Navigate to presentation viewer instead of editor
+      navigate(`/presentation/${result.projectId}`);
+    } else {
+      alert('Something went wrong, please try again.');
+    }
     setIsLoading(false);
   };
 

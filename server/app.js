@@ -4,6 +4,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import projectRoutes from "./routes/projects.js"
 import themeRoutes from "./routes/themes.js"
+import pptRoutes from "./routes/pptRoutes.js"
 
 // Load environment variables
 dotenv.config();
@@ -24,5 +25,6 @@ app.get("/", (req, res) => {
 
 app.use("/api/projects", projectRoutes);
 app.use("/api/themes", themeRoutes);
+app.use("/api/ppt", pptRoutes);
 
 export default app;
