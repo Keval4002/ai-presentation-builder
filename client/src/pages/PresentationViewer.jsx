@@ -106,6 +106,22 @@ const PresentationViewer = () => {
     );
   }
 
+    if (data.status === 'image creation') {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="mb-4">
+          <button onClick={() => navigate('/')} className="text-blue-600 hover:text-blue-800 mb-4 flex items-center">← Back to Home</button>
+        </div>
+        <div className="flex flex-col items-center justify-center py-12">
+          <LoadingSpinner />
+          <p className="text-gray-600 mt-4">Images are currently being generated...</p>
+          <p className="text-sm text-gray-500 mt-2">Last updated: {new Date(data.updated_at).toLocaleString()}</p>
+          <button onClick={fetchPresentationData} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm mt-4 transition-colors">Check Status</button>
+        </div>
+      </div>
+    );
+  }
+
   // Pending state
   if (data.status === 'pending') {
     return (

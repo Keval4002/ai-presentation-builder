@@ -65,7 +65,8 @@ router.post("/:slug/details", async (req, res) => {
       mode,
       slideCount,
       prompt,
-      outline
+      outline,
+      requestId
     });
 
     res.status(200).json({
@@ -100,6 +101,44 @@ router.get("/last-request", async (req, res) => {
   } catch (err) {
     console.error("Error fetching last PPT request:", err);
     res.status(500).json({ error: "Failed to fetch last PPT request" });
+  }
+});
+
+
+router.get("/project/:projectId", async (req, res) => {
+  const { projectId } = req.params;
+
+  try {
+    const result = await pool.query(
+      `SELECT id, status, slides, updated_at FROM ppt_projects WHERE id = $1`,
+      [projectId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Project not found." });
+    }
+
+    const project = result.rows[0];
+
+    // ✅ Only return slides if status is 'completed'
+    if (project.status !== 'completed') {
+      return res.json({
+        id: project.id,
+        status: project.status,
+        updated_at: project.updated_at
+      });
+    }
+
+    return res.json({
+      id: project.id,
+      status: project.status,
+      slides: JSON.parse(project.slides),
+      updated_at: project.updated_at
+    });
+
+  } catch (error) {
+    console.error("Error fetching project:", error);
+    return res.status(500).json({ message: "Server error" });
   }
 });
 
