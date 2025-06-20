@@ -2,9 +2,9 @@ import { callLLM } from "../utils/geminiApi.js";
 import { pool } from "../db/pool.js";
 import { geminiAgent3 } from "./geminiAgent3.js";
 
-async function geminiAgent1({ prompt, outline, slideCount, themeSlug, mode, requestId }) {
+// FIX: Added pptProjectId to handle status updates directly
+async function geminiAgent1({ prompt, outline, slideCount, themeSlug, mode, requestId, pptProjectId }) {
   try {
-    // ✅ Fetch theme
     const themes = await pool.query(
       `SELECT name, description, primary_color, secondary_color, background_color, text_color, thumbnail_style
        FROM themes
@@ -15,11 +15,8 @@ async function geminiAgent1({ prompt, outline, slideCount, themeSlug, mode, requ
     if (themes.rows.length === 0) {
       throw new Error(`Theme "${themeSlug}" not found`);
     }
-
     const theme = themes.rows[0];
-
-    // ✅ Build prompt
-const finalPrompt = `You are a world-class presentation designer and expert content strategist. Your task is to generate the complete structure and content for a presentation that is both informative and engaging, based on user requirements and a specific visual theme.
+    const finalPrompt = `You are a world-class presentation designer and expert content strategist. Your task is to generate the complete structure and content for a presentation that is both informative and engaging, based on user requirements and a specific visual theme.
 
 **Core Task:**
 - Main Topic/Prompt: "${prompt}"
@@ -66,51 +63,61 @@ const finalPrompt = `You are a world-class presentation designer and expert cont
 ⚠ Your response will be fed directly to a parser. If it is not valid JSON, it will fail.
 `.trim();
 
-
-    // ✅ Call LLM
-    let rawResponse = await callLLM({
-      model: "gemini-2.0-flash",
-      prompt: finalPrompt,
-      apiType: "gemini"
-    });
-
-    // ✅ Defensive cleanup (remove possible backticks, code fences, markers)
+    let rawResponse = await callLLM({ model: "gemini-2.0-flash", prompt: finalPrompt, apiType: "gemini" });
     rawResponse = rawResponse.replace(/```json/g, "").replace(/```/g, "").trim();
 
-    // console.log("CLEANED RAW GEMINI RESPONSE >>>", rawResponse);
-
-    // ✅ Parse + validate
-    let slides;
+    let slidesData;
     try {
-      slides = JSON.parse(rawResponse);
+      slidesData = JSON.parse(rawResponse);
     } catch (parseErr) {
       console.error("Gemini response parse error:", parseErr);
-      throw new Error("LLM returned unstructured data. Review prompt or response.");
+      throw new Error("LLM returned unstructured data.");
     }
-
-    if (!slides.slides || !Array.isArray(slides.slides)) {
+    if (!slidesData.slides || !Array.isArray(slidesData.slides)) {
       throw new Error("LLM response missing 'slides' array");
     }
-
-    try {
-      await pool.query(
-        `INSERT INTO content (slides,request_id, theme_slug, prompt, status, slide_count)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [JSON.stringify(slides.slides), requestId, themeSlug, prompt, "image creation", slideCount]
-      );//hard coded status need to change
-    } catch (error) {
-      console.error("Error inserting slide content:", error.message);
-      throw new Error("Failed to save slide content to DB.");
-    }
     
-    // const enrichedSlides = await geminiAgent3(slides.slides);
+    const contentOnlySlides = slidesData.slides;
 
-    // return enrichedSlides;
-    return slides;
+    // FIX: Update project status to 'image creation' and save text content.
+    // This allows the frontend to show progress.
+    await pool.query(
+      `UPDATE ppt_projects 
+       SET slides = $1, status = 'image creation', updated_at = NOW()
+       WHERE id = $2`,
+      [JSON.stringify(contentOnlySlides), pptProjectId]
+    );
+    console.log(`Project ${pptProjectId} status updated to 'image creation'.`);
+    
+    // Insert initial content into `content` table for logging/polling
+    await pool.query(
+        `INSERT INTO content (slides, request_id, theme_slug, prompt, status, slide_count) VALUES ($1, $2, $3, $4, 'image creation', $5)`,
+        [JSON.stringify(contentOnlySlides), requestId, themeSlug, prompt, slideCount]
+    );
+    
+    // Begin image generation
+    const enrichedSlides = await geminiAgent3(contentOnlySlides);
 
+    // FIX: Final update. Status is now 'completed' with image URLs.
+    await pool.query(
+      `UPDATE ppt_projects 
+       SET slides = $1, status = 'completed', updated_at = NOW()
+       WHERE id = $2`,
+      [JSON.stringify(enrichedSlides), pptProjectId]
+    );
+    console.log(`Project ${pptProjectId} status updated to 'completed'.`);
+    
+    // Also update the 'content' table to reflect completion.
+    await pool.query(
+        `UPDATE content SET slides = $1, status = 'completed' WHERE request_id = $2`,
+        [JSON.stringify(enrichedSlides), requestId]
+    );
+
+    return enrichedSlides;
 
   } catch (error) {
     console.error("geminiAgent1 error:", error.message);
+    // Let the error bubble up to aiGeneratorService, which will set the project status to 'failed'
     throw error;
   }
 }

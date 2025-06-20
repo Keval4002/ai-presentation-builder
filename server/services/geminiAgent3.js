@@ -9,31 +9,35 @@ import pLimit from "p-limit";
 
 const limit = pLimit(5);
 
-
-
 async function geminiAgent3(slides){
-
-    const enrichedSlides = await Promise.allSettled(
-        slides.map((slide)=>
-            limit(async()=>{
-
-                const prompt = slide.imageSuggestion?.description || "abstract digital art";
-                const imageUrl = await callPollinations({prompt});
-                return{
-                    ...slide, imageSuggestion:{...slide.imageSuggestion, imageUrl}
-                }
+    const imagePromises = slides.map((slide) =>
+        limit(async () => {
+            const prompt = slide.imageSuggestion?.description || "abstract digital art for a presentation slide";
+            const imageUrl = await callPollinations({ prompt });
+            return {
+                ...slide,
+                imageSuggestion: { ...slide.imageSuggestion, imageUrl },
+                imageUrl: imageUrl, // Add imageUrl to top level for easier access
+                imagePending: false
+            };
         })
-    ));
+    );
 
-    
+    const results = await Promise.allSettled(imagePromises);
 
-    return enrichedSlides.map((result, index)=>{
-        if(result.status === "fulfilled") return result.value;
-        console.error(`Image generation failed for slide ${slides[index].slideNumber}`, result.reason);
-        return{
-            ...slide, imageSuggestion:{...slides[index].imageSuggestion, imageUrl:null}
+    return results.map((result, index) => {
+        if (result.status === "fulfilled") {
+            return result.value;
         }
+        // If image generation failed, return original slide with a null image and pending flag
+        console.error(`Image generation failed for slide ${slides[index].slideNumber}`, result.reason);
+        return {
+            ...slides[index],
+            imageSuggestion: { ...slides[index].imageSuggestion, imageUrl: null },
+            imageUrl: null,
+            imagePending: true // Flag that image is still pending/failed
+        };
     });
 }
 
-export {geminiAgent3};
+export { geminiAgent3 };
