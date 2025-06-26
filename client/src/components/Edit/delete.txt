@@ -1,0 +1,492 @@
+
+// import React, { useState, useEffect } from 'react';
+// import { Stage, Layer, Text, Image as KonvaImage, Rect, Line } from 'react-konva';
+// import useimage from 'use-image';
+
+// // ===================================================================
+// // PART 1: CONSTANTS & TYPES
+// // (Future file: canvas/canvas-types-constants.js)
+// // Import: No imports needed
+// // ===================================================================
+
+// const CANVAS_CONFIG = {
+//   WIDTH: 1280,
+//   HEIGHT: 720,
+//   SNAP_THRESHOLD: 10,
+//   SELECTION_PADDING: 5,
+//   GUIDE_COLOR: '#ff0000',
+//   GUIDE_OPACITY: 0.7
+// };
+
+// const ELEMENT_TYPES = {
+//   TEXT: 'text',
+//   IMAGE: 'image',
+//   SHAPE: 'shape'
+// };
+
+// const createCanvasElement = ({
+//   id,
+//   type,
+//   x = 0,
+//   y = 0,
+//   width = 200,
+//   height = 50,
+//   ...props
+// }) => ({
+//   id,
+//   type,
+//   x,
+//   y,
+//   width,
+//   height,
+//   ...props
+// });
+
+// const createTextElement = ({
+//   id,
+//   text,
+//   x,
+//   y,
+//   width,
+//   height,
+//   fontSize = 20,
+//   fontFamily = 'Arial',
+//   fill = '#000000',
+//   align = 'left',
+//   fontStyle = 'normal'
+// }) => createCanvasElement({
+//   id,
+//   type: ELEMENT_TYPES.TEXT,
+//   text,
+//   x,
+//   y,
+//   width,
+//   height,
+//   fontSize,
+//   fontFamily,
+//   fill,
+//   align,
+//   fontStyle
+// });
+
+// const createImageElement = ({
+//   id,
+//   src,
+//   x,
+//   y,
+//   width,
+//   height
+// }) => createCanvasElement({
+//   id,
+//   type: ELEMENT_TYPES.IMAGE,
+//   src,
+//   x,
+//   y,
+//   width,
+//   height
+// });
+
+// // ===================================================================
+// // PART 2: CONTENT PARSING & CONVERSION
+// // (Future file: canvas/content-parser.js)
+// // Import: import { CANVAS_CONFIG, createTextElement, createImageElement } from './canvas-types-constants';
+// // ===================================================================
+
+// const parseContentText = (content) => {
+//   if (!content) return '';
+  
+//   return content
+//     .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold markers
+//     .replace(/^- /gm, '• ') // Convert bullet points to bullets
+//     .trim();
+// };
+
+// const convertLayoutToPixels = (layout) => {
+//   if (!layout) return null;
+  
+//   return {
+//     x: layout.x * CANVAS_CONFIG.WIDTH,
+//     y: layout.y * CANVAS_CONFIG.HEIGHT,
+//     width: layout.width * CANVAS_CONFIG.WIDTH,
+//     height: layout.height * CANVAS_CONFIG.HEIGHT
+//   };
+// };
+
+// const convertPixelsToLayout = (pixels) => {
+//   return {
+//     x: pixels.x / CANVAS_CONFIG.WIDTH,
+//     y: pixels.y / CANVAS_CONFIG.HEIGHT,
+//     width: pixels.width / CANVAS_CONFIG.WIDTH,
+//     height: pixels.height / CANVAS_CONFIG.HEIGHT
+//   };
+// };
+
+// const convertSlideToCanvasElements = (slide, theme) => {
+//   const elements = [];
+//   const layout = slide.layout || {};
+
+//   // Title element
+//   if (slide.title) {
+//     const titleLayout = convertLayoutToPixels(layout.title) || {
+//       x: 100, y: 50, width: 1080, height: 80
+//     };
+    
+//     elements.push(createTextElement({
+//       id: 'title',
+//       text: slide.title,
+//       ...titleLayout,
+//       fontSize: slide.type === 'TitleSlide' ? 48 : 36,
+//       fontFamily: theme.heading_font,
+//       fill: theme.primary_color,
+//       fontStyle: 'bold',
+//       align: slide.type === 'TitleSlide' ? 'center' : 'left'
+//     }));
+//   }
+
+//   // Content element (with LLM formatting parsing)
+//   if (slide.content) {
+//     const contentLayout = convertLayoutToPixels(layout.content) || {
+//       x: 100, y: 150, width: 1080, height: 400
+//     };
+    
+//     const parsedContent = parseContentText(slide.content);
+    
+//     elements.push(createTextElement({
+//       id: 'content',
+//       text: parsedContent,
+//       ...contentLayout,
+//       fontSize: 20,
+//       fontFamily: theme.body_font,
+//       fill: theme.text_color,
+//       align: 'left'
+//     }));
+//   }
+
+//   // Image element
+//   if (slide.imageUrl) {
+//     const imageLayout = convertLayoutToPixels(layout.image) || {
+//       x: 800, y: 200, width: 400, height: 300
+//     };
+    
+//     elements.push(createImageElement({
+//       id: 'image',
+//       src: slide.imageUrl,
+//       ...imageLayout
+//     }));
+//   }
+
+//   return elements;
+// };
+
+// // ===================================================================
+// // PART 3: CANVAS UTILITIES
+// // (Future file: canvas/canvas-utilities.js)
+// // Import: import { CANVAS_CONFIG } from './canvas-types-constants';
+// // ===================================================================
+
+// const constrainElementToBounds = (element, newX, newY) => {
+//   const { WIDTH, HEIGHT } = CANVAS_CONFIG;
+//   const { width = 200, height = 50 } = element;
+  
+//   return {
+//     x: Math.max(0, Math.min(newX, WIDTH - width)),
+//     y: Math.max(0, Math.min(newY, HEIGHT - height))
+//   };
+// };
+
+// const generateSnapGuides = (draggedElement, allElements) => {
+//   const guides = { vertical: [], horizontal: [] };
+//   const { SNAP_THRESHOLD, WIDTH, HEIGHT } = CANVAS_CONFIG;
+
+//   allElements.forEach(el => {
+//     if (el.id === draggedElement.id) return;
+
+//     const elRight = el.x + (el.width || 0);
+//     const elBottom = el.y + (el.height || 0);
+//     const draggedRight = draggedElement.x + (draggedElement.width || 0);
+//     const draggedBottom = draggedElement.y + (draggedElement.height || 0);
+
+//     // Vertical alignment guides
+//     if (Math.abs(el.x - draggedElement.x) < SNAP_THRESHOLD) {
+//       guides.vertical.push(el.x);
+//     }
+//     if (Math.abs(elRight - draggedElement.x) < SNAP_THRESHOLD) {
+//       guides.vertical.push(elRight);
+//     }
+//     if (Math.abs(el.x - draggedRight) < SNAP_THRESHOLD) {
+//       guides.vertical.push(el.x);
+//     }
+
+//     // Horizontal alignment guides
+//     if (Math.abs(el.y - draggedElement.y) < SNAP_THRESHOLD) {
+//       guides.horizontal.push(el.y);
+//     }
+//     if (Math.abs(elBottom - draggedElement.y) < SNAP_THRESHOLD) {
+//       guides.horizontal.push(elBottom);
+//     }
+//     if (Math.abs(el.y - draggedBottom) < SNAP_THRESHOLD) {
+//       guides.horizontal.push(el.y);
+//     }
+//   });
+
+//   // Canvas edge guides
+//   if (draggedElement.x < SNAP_THRESHOLD) guides.vertical.push(0);
+//   if (draggedElement.y < SNAP_THRESHOLD) guides.horizontal.push(0);
+//   if ((WIDTH - draggedRight) < SNAP_THRESHOLD) {
+//     guides.vertical.push(WIDTH - (draggedElement.width || 0));
+//   }
+//   if ((HEIGHT - draggedBottom) < SNAP_THRESHOLD) {
+//     guides.horizontal.push(HEIGHT - (draggedElement.height || 0));
+//   }
+
+//   return {
+//     vertical: [...new Set(guides.vertical)],
+//     horizontal: [...new Set(guides.horizontal)]
+//   };
+// };
+
+// const getSelectionBounds = (element) => {
+//   const { SELECTION_PADDING } = CANVAS_CONFIG;
+//   return {
+//     x: element.x - SELECTION_PADDING,
+//     y: element.y - SELECTION_PADDING,
+//     width: (element.width || 200) + SELECTION_PADDING * 2,
+//     height: (element.height || 50) + SELECTION_PADDING * 2
+//   };
+// };
+
+// // ===================================================================
+// // PART 4: INDIVIDUAL CANVAS COMPONENTS
+// // (Future file: canvas/canvas-components.jsx)
+// // Import: import React from 'react';
+// // Import: import { Text, Image as KonvaImage, Rect, Line } from 'react-konva';
+// // Import: import useimage from 'use-image';
+// // Import: import { constrainElementToBounds, getSelectionBounds } from './canvas-utilities';
+// // ===================================================================
+
+// const CanvasTextElement = ({
+//   element,
+//   isSelected,
+//   theme,
+//   onUpdate,
+//   onSelect,
+//   onDragMove,
+//   onDragEnd
+// }) => {
+//   const selectionBounds = getSelectionBounds(element);
+
+//   return (
+//     <React.Fragment>
+//       <Text
+//         {...element}
+//         draggable
+//         onClick={() => onSelect(element.id)}
+//         onDragMove={(e) => {
+//           const newPos = { x: e.target.x(), y: e.target.y() };
+//           onDragMove(element, newPos);
+//         }}
+//         onDragEnd={(e) => {
+//           const constrained = constrainElementToBounds(
+//             element, 
+//             e.target.x(), 
+//             e.target.y()
+//           );
+//           onUpdate(element.id, constrained);
+//           onDragEnd();
+//         }}
+//       />
+      
+//       {isSelected && (
+//         <Rect
+//           {...selectionBounds}
+//           stroke={theme.primary_color}
+//           strokeWidth={2}
+//           dash={[5, 5]}
+//           fill="transparent"
+//           listening={false}
+//         />
+//       )}
+//     </React.Fragment>
+//   );
+// };
+
+// const CanvasImageElement = ({
+//   element,
+//   isSelected,
+//   theme,
+//   onUpdate,
+//   onSelect,
+//   onDragMove,
+//   onDragEnd
+// }) => {
+//   const [img] = useimage(element.src);
+//   const selectionBounds = getSelectionBounds(element);
+
+//   if (!img) return null;
+
+//   return (
+//     <React.Fragment>
+//       <KonvaImage
+//         {...element}
+//         image={img}
+//         draggable
+//         onClick={() => onSelect(element.id)}
+//         onDragMove={(e) => {
+//           const newPos = { x: e.target.x(), y: e.target.y() };
+//           onDragMove(element, newPos);
+//         }}
+//         onDragEnd={(e) => {
+//           const constrained = constrainElementToBounds(
+//             element, 
+//             e.target.x(), 
+//             e.target.y()
+//           );
+//           onUpdate(element.id, constrained);
+//           onDragEnd();
+//         }}
+//       />
+      
+//       {isSelected && (
+//         <Rect
+//           {...selectionBounds}
+//           stroke={theme.primary_color}
+//           strokeWidth={2}
+//           dash={[5, 5]}
+//           fill="transparent"
+//           listening={false}
+//         />
+//       )}
+//     </React.Fragment>
+//   );
+// };
+
+// const SnapGuides = ({ guides }) => {
+//   const { WIDTH, HEIGHT, GUIDE_COLOR, GUIDE_OPACITY } = CANVAS_CONFIG;
+
+//   return (
+//     <React.Fragment>
+//       {guides.vertical.map((x, i) => (
+//         <Line
+//           key={`v-${i}`}
+//           points={[x, 0, x, HEIGHT]}
+//           stroke={GUIDE_COLOR}
+//           strokeWidth={1}
+//           dash={[5, 5]}
+//           opacity={GUIDE_OPACITY}
+//           listening={false}
+//         />
+//       ))}
+      
+//       {guides.horizontal.map((y, i) => (
+//         <Line
+//           key={`h-${i}`}
+//           points={[0, y, WIDTH, y]}
+//           stroke={GUIDE_COLOR}
+//           strokeWidth={1}
+//           dash={[5, 5]}
+//           opacity={GUIDE_OPACITY}
+//           listening={false}
+//         />
+//       ))}
+//     </React.Fragment>
+//   );
+// };
+
+// // ===================================================================
+// // PART 5: MAIN COMPONENT
+// // (Current file: EditableCanvasSlide.jsx)
+// // Import: import React, { useState, useEffect } from 'react';
+// // Import: import { Stage, Layer } from 'react-konva';
+// // Import: import { CANVAS_CONFIG, ELEMENT_TYPES } from './canvas/canvas-types-constants';
+// // Import: import { convertSlideToCanvasElements } from './canvas/content-parser';
+// // Import: import { generateSnapGuides } from './canvas/canvas-utilities';
+// // Import: import { CanvasTextElement, CanvasImageElement, SnapGuides } from './canvas/canvas-components';
+// // ===================================================================
+
+// function EditableCanvasSlide({ slide, theme, onUpdate, index }) {
+//   const [canvasElements, setCanvasElements] = useState([]);
+//   const [selectedElementId, setSelectedElementId] = useState(null);
+//   const [snapGuides, setSnapGuides] = useState({ vertical: [], horizontal: [] });
+
+//   // Initialize canvas elements from slide data
+//   useEffect(() => {
+//     const elements = convertSlideToCanvasElements(slide, theme);
+//     setCanvasElements(elements);
+//   }, [slide, theme]);
+
+//   const handleElementUpdate = (elementId, newProps) => {
+//     const updatedElements = canvasElements.map(el => 
+//       el.id === elementId ? { ...el, ...newProps } : el
+//     );
+    
+//     setCanvasElements(updatedElements);
+//     onUpdate({ 
+//       ...slide, 
+//       canvasElements: updatedElements 
+//     });
+//   };
+
+//   const handleElementSelect = (elementId) => {
+//     setSelectedElementId(elementId);
+//     setSnapGuides({ vertical: [], horizontal: [] });
+//   };
+
+//   const handleStageClick = (e) => {
+//     if (e.target === e.target.getStage()) {
+//       setSelectedElementId(null);
+//       setSnapGuides({ vertical: [], horizontal: [] });
+//     }
+//   };
+
+//   const handleDragMove = (draggedElement, newPosition) => {
+//     const elementWithNewPos = { ...draggedElement, ...newPosition };
+//     const guides = generateSnapGuides(elementWithNewPos, canvasElements);
+//     setSnapGuides(guides);
+//   };
+
+//   const handleDragEnd = () => {
+//     setSnapGuides({ vertical: [], horizontal: [] });
+//   };
+
+//   const renderCanvasElement = (element) => {
+//     const commonProps = {
+//       element,
+//       isSelected: selectedElementId === element.id,
+//       theme,
+//       onUpdate: handleElementUpdate,
+//       onSelect: handleElementSelect,
+//       onDragMove: handleDragMove,
+//       onDragEnd: handleDragEnd
+//     };
+
+//     switch (element.type) {
+//       case ELEMENT_TYPES.TEXT:
+//         return <CanvasTextElement key={element.id} {...commonProps} />;
+      
+//       case ELEMENT_TYPES.IMAGE:
+//         return <CanvasImageElement key={element.id} {...commonProps} />;
+      
+//       default:
+//         console.warn(`Unknown element type: ${element.type}`);
+//         return null;
+//     }
+//   };
+
+//   return (
+//     <div className='mb-12 border rounded-3xl overflow-hidden shadow-xl'>
+//       <Stage 
+//         width={CANVAS_CONFIG.WIDTH} 
+//         height={CANVAS_CONFIG.HEIGHT} 
+//         style={{ background: theme.background_color }}
+//         onClick={handleStageClick}
+//       >
+//         <Layer>
+//           <SnapGuides guides={snapGuides} />
+//           {canvasElements.map(renderCanvasElement)}
+//         </Layer>
+//       </Stage>
+//     </div>
+//   );
+// }
+
+// export default EditableCanvasSlide;

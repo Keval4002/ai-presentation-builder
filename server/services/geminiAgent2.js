@@ -2,22 +2,240 @@ import { pool } from "../db/pool.js"
 import { callLLM } from "../utils/geminiApi.js"
 
 const layoutStyles = [
-  { name: "LeftImageRightContent", applicableTo: ["ContentSlide"], layout: { title: { x: 0.05, y: 0.05, width: 0.9, height: 0.1 }, image: { x: 0.05, y: 0.2, width: 0.4, height: 0.6 }, content: { x: 0.5, y: 0.2, width: 0.45, height: 0.6 } } },
-  { name: "TopTitleBottomImage", applicableTo: ["ContentSlide"], layout: { title: { x: 0.05, y: 0.05, width: 0.9, height: 0.1 }, image: { x: 0.2, y: 0.65, width: 0.6, height: 0.25 }, content: { x: 0.05, y: 0.2, width: 0.9, height: 0.4 } } },
-  { name: "FullImageWithOverlayText", applicableTo: ["TitleSlide", "ConclusionSlide", "Q&A"], layout: { title: { x: 0.2, y: 0.4, width: 0.6, height: 0.2 }, image: { x: 0, y: 0, width: 1, height: 1 }, content: null } },
-  { name: "CenteredTitleAndImageOnly", applicableTo: ["TitleSlide", "ConclusionSlide", "Q&A"], layout: { title: { x: 0.1, y: 0.2, width: 0.8, height: 0.15 }, image: { x: 0.25, y: 0.4, width: 0.5, height: 0.4 } } },
-  { name: "TwoColumnTextImage", applicableTo: ["ContentSlide"], layout: { title: { x: 0.05, y: 0.05, width: 0.9, height: 0.08 }, content: { x: 0.05, y: 0.2, width: 0.4, height: 0.6 }, image: { x: 0.55, y: 0.2, width: 0.4, height: 0.6 } } },
-  { name: "ImageTopContentBottom", applicableTo: ["ContentSlide"], layout: { image: { x: 0.1, y: 0.05, width: 0.8, height: 0.4 }, content: { x: 0.05, y: 0.5, width: 0.9, height: 0.4 }, title: { x: 0.05, y: 0.92, width: 0.9, height: 0.06 } } },
-  { name: "DiagonalVisualFlow", applicableTo: ["ContentSlide"], layout: { title: { x: 0.05, y: 0.05, width: 0.6, height: 0.1 }, content: { x: 0.1, y: 0.25, width: 0.6, height: 0.6 }, image: { x: 0.65, y: 0.65, width: 0.3, height: 0.3 } } },
-  { name: "WideTitleImageOverlay", applicableTo: ["TitleSlide", "Q&A"], layout: { title: { x: 0.05, y: 0.1, width: 0.9, height: 0.15 }, image: { x: 0, y: 0.3, width: 1, height: 0.7 } } },
-  { name: "CenteredBoxedContent", applicableTo: ["ContentSlide"], layout: { title: { x: 0.1, y: 0.1, width: 0.8, height: 0.1 }, content: { x: 0.15, y: 0.25, width: 0.7, height: 0.4 }, image: { x: 0.35, y: 0.7, width: 0.3, height: 0.2 } } },
-  { name: "MinimalCenteredImageTitle", applicableTo: ["TitleSlide", "ConclusionSlide", "Q&A"], layout: { title: { x: 0.25, y: 0.3, width: 0.5, height: 0.2 }, image: { x: 0.35, y: 0.55, width: 0.3, height: 0.3 } } }
+  {
+    name: "LeftImageRightContent",
+    applicableTo: ["ContentSlide", "AgendaSlide"],
+    layout: {
+      title: { x: 0.08, y: 0.06, width: 0.84, height: 0.08 },
+      image: { x: 0.08, y: 0.18, width: 0.38, height: 0.68 },
+      content: { x: 0.52, y: 0.18, width: 0.40, height: 0.68 }
+    }
+  },
+  {
+    name: "RightImageLeftContent", 
+    applicableTo: ["ContentSlide", "AgendaSlide"],
+    layout: {
+      title: { x: 0.08, y: 0.06, width: 0.84, height: 0.08 },
+      content: { x: 0.08, y: 0.18, width: 0.40, height: 0.68 },
+      image: { x: 0.54, y: 0.18, width: 0.38, height: 0.68 }
+    }
+  },
+  {
+    name: "TopImageBottomContent",
+    applicableTo: ["ContentSlide", "AgendaSlide"],
+    layout: {
+      title: { x: 0.08, y: 0.06, width: 0.84, height: 0.08 },
+      image: { x: 0.08, y: 0.18, width: 0.84, height: 0.35 },
+      content: { x: 0.08, y: 0.58, width: 0.84, height: 0.34 }
+    }
+  },
+  {
+    name: "BottomImageTopContent",
+    applicableTo: ["ContentSlide", "AgendaSlide"],
+    layout: {
+      title: { x: 0.08, y: 0.06, width: 0.84, height: 0.08 },
+      content: { x: 0.08, y: 0.18, width: 0.84, height: 0.35 },
+      image: { x: 0.08, y: 0.58, width: 0.84, height: 0.34 }
+    }
+  },
+  {
+    name: "TwoColumnTextImage",
+    applicableTo: ["ContentSlide", "AgendaSlide"],
+    layout: {
+      title: { x: 0.08, y: 0.06, width: 0.84, height: 0.07 },
+      content: { x: 0.08, y: 0.18, width: 0.38, height: 0.68 },
+      image: { x: 0.54, y: 0.18, width: 0.38, height: 0.68 }
+    }
+  },
+  {
+    name: "ContentOnlyLayout",
+    applicableTo: ["ContentSlide", "AgendaSlide"],
+    layout: {
+      title: { x: 0.08, y: 0.06, width: 0.84, height: 0.08 },
+      content: { x: 0.08, y: 0.18, width: 0.84, height: 0.72 }
+    }
+  },
+  {
+    name: "CenteredContentWithSideImage",
+    applicableTo: ["ContentSlide", "AgendaSlide"],
+    layout: {
+      title: { x: 0.08, y: 0.06, width: 0.84, height: 0.08 },
+      content: { x: 0.08, y: 0.18, width: 0.60, height: 0.68 },
+      image: { x: 0.72, y: 0.25, width: 0.20, height: 0.50 }
+    }
+  },
+  {
+    name: "CenteredTitleWithImage",
+    applicableTo: ["TitleSlide"],
+    layout: {
+      title: { x: 0.15, y: 0.25, width: 0.70, height: 0.20 },
+      image: { x: 0.25, y: 0.50, width: 0.50, height: 0.35 }
+    }
+  },
+  {
+    name: "FullImageWithOverlayTitle",
+    applicableTo: ["TitleSlide"],
+    layout: {
+      image: { x: 0, y: 0, width: 1, height: 1 },
+      title: { x: 0.20, y: 0.35, width: 0.60, height: 0.30 }
+    }
+  },
+  {
+    name: "MinimalTitleOnly",
+    applicableTo: ["TitleSlide"],
+    layout: {
+      title: { x: 0.15, y: 0.40, width: 0.70, height: 0.20 }
+    }
+  },
+  {
+    name: "TitleWithSubtitle",
+    applicableTo: ["TitleSlide"],
+    layout: {
+      title: { x: 0.10, y: 0.30, width: 0.80, height: 0.15 },
+      content: { x: 0.15, y: 0.50, width: 0.70, height: 0.10 },
+      image: { x: 0.35, y: 0.65, width: 0.30, height: 0.25 }
+    }
+  },
+  {
+    name: "SideImageTitle",
+    applicableTo: ["TitleSlide"],
+    layout: {
+      title: { x: 0.08, y: 0.30, width: 0.50, height: 0.25 },
+      image: { x: 0.65, y: 0.20, width: 0.27, height: 0.60 }
+    }
+  },
+  {
+    name: "CenteredQALayout",
+    applicableTo: ["Q&A"],
+    layout: {
+      title: { x: 0.25, y: 0.35, width: 0.50, height: 0.30 },
+      image: { x: 0.35, y: 0.70, width: 0.30, height: 0.25 }
+    }
+  },
+  {
+    name: "FullScreenQA",
+    applicableTo: ["Q&A"],
+    layout: {
+      title: { x: 0.08, y: 0.35, width: 0.60, height: 0.20 },
+      image: { x: 0.72, y: 0.25, width: 0.20, height: 0.40 }
+    }
+  },
+  {
+    name: "MinimalQA",
+    applicableTo: ["Q&A"],
+    layout: {
+      title: { x: 0.20, y: 0.45, width: 0.60, height: 0.10 }
+    }
+  },
+  {
+    name: "ConclusionWithImage",
+    applicableTo: ["ConclusionSlide"],
+    layout: {
+      title: { x: 0.15, y: 0.20, width: 0.70, height: 0.15 },
+      content: { x: 0.15, y: 0.40, width: 0.70, height: 0.25 },
+      image: { x: 0.30, y: 0.70, width: 0.40, height: 0.25 }
+    }
+  },
+  {
+    name: "FullImageConclusion",
+    applicableTo: ["ConclusionSlide"],
+    layout: {
+      title: { x: 0.08, y: 0.10, width: 0.60, height: 0.12 },
+      content: { x: 0.08, y: 0.26, width: 0.60, height: 0.50 },
+      image: { x: 0.72, y: 0.20, width: 0.20, height: 0.40 }
+    }
+  }
 ];
 
-function getRandomLayout(slideType) {
-    const filtered = layoutStyles.filter(style => style.applicableTo.includes(slideType));
-    if (filtered.length === 0) return null;
-    return filtered[Math.floor(Math.random() * filtered.length)]?.layout || null;
+function validateCoordinate(coords) {
+  if (!coords || typeof coords !== 'object') return false;
+  const { x, y, width, height } = coords;
+  return (
+    typeof x === 'number' && 
+    typeof y === 'number' &&
+    typeof width === 'number' && 
+    typeof height === 'number' &&
+    x >= 0 && x <= 1 &&
+    y >= 0 && y <= 1 &&
+    width > 0.02 && width <= 1 &&
+    height > 0.02 && height <= 1 &&
+    (x + width) <= 1.02 &&
+    (y + height) <= 1.02
+  );
+}
+
+function validateLayout(layout) {
+  if (!layout || typeof layout !== 'object') return false;
+  
+  for (const [key, coords] of Object.entries(layout)) {
+    if (coords !== null && coords !== undefined && !validateCoordinate(coords)) {
+      console.warn(`Invalid coordinate for ${key}:`, coords);
+      return false;
+    }
+  }
+  return true;
+}
+
+function getRandomLayout(slideType, hasImage = false) {
+    let filtered = layoutStyles.filter(style => style.applicableTo.includes(slideType));
+    
+    if (hasImage) {
+        filtered = filtered.filter(style => style.layout.image !== undefined && style.layout.image !== null);
+    }
+    
+    if (filtered.length === 0) {
+        console.warn(`No layouts found for slide type ${slideType} with image=${hasImage}, using fallback`);
+        return getFallbackLayout(slideType, hasImage);
+    }
+    
+    const randomStyle = filtered[Math.floor(Math.random() * filtered.length)];
+    const layout = randomStyle?.layout;
+    
+    if (!validateLayout(layout)) {
+        console.warn(`Invalid layout for slide type ${slideType}, using fallback`);
+        return getFallbackLayout(slideType, hasImage);
+    }
+    
+    return layout;
+}
+
+function getFallbackLayout(slideType, hasImage = false) {
+    switch (slideType) {
+        case 'TitleSlide':
+            if (hasImage) {
+                return {
+                    title: { x: 0.15, y: 0.25, width: 0.70, height: 0.20 },
+                    image: { x: 0.25, y: 0.50, width: 0.50, height: 0.35 }
+                };
+            }
+            return {
+                title: { x: 0.15, y: 0.40, width: 0.70, height: 0.20 }
+            };
+        case 'Q&A':
+            if (hasImage) {
+                return {
+                    title: { x: 0.25, y: 0.35, width: 0.50, height: 0.30 },
+                    image: { x: 0.35, y: 0.70, width: 0.30, height: 0.25 }
+                };
+            }
+            return {
+                title: { x: 0.20, y: 0.45, width: 0.60, height: 0.10 }
+            };
+        case 'AgendaSlide':
+        case 'ContentSlide':
+        default:
+            if (hasImage) {
+                return {
+                    title: { x: 0.08, y: 0.06, width: 0.84, height: 0.08 },
+                    content: { x: 0.08, y: 0.18, width: 0.40, height: 0.68 },
+                    image: { x: 0.54, y: 0.18, width: 0.38, height: 0.68 }
+                };
+            }
+            return {
+                title: { x: 0.08, y: 0.06, width: 0.84, height: 0.08 },
+                content: { x: 0.08, y: 0.18, width: 0.84, height: 0.72 }
+            };
+    }
 }
 
 export async function geminiAgent2(requestId, slideCount) {
@@ -61,10 +279,17 @@ export async function geminiAgent2(requestId, slideCount) {
                     return reject(new Error('Slides data is not in expected array format'));
                 }
 
-                const slidesWithLayout = slides.map((slide) => ({
-                    ...slide,
-                    layout: getRandomLayout(slide.type),
-                }));
+                const slidesWithLayout = slides.map((slide) => {
+                    const hasImage = !!(slide.imageUrl && slide.imageUrl.trim() !== '');
+                    const layout = getRandomLayout(slide.type, hasImage);
+                    
+                    console.log(`Slide ${slide.slideNumber} (${slide.type}) - hasImage: ${hasImage}, layout:`, layout);
+                    
+                    return {
+                        ...slide,
+                        layout: layout
+                    };
+                });
 
                 try {
                     const existingLayout = await pool.query('SELECT id FROM layout_slides WHERE request_id = $1', [requestId]);

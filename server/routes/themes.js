@@ -85,28 +85,45 @@ router.get("/project/:projectId", async (req, res) => {
   const { projectId } = req.params;
 
   try {
-    const result = await pool.query(
-      `SELECT id, status, slides, updated_at FROM ppt_projects WHERE id = $1`,
+    // Step 1: Get the project data and its request_id
+    const projectResult = await pool.query(
+      `SELECT id, status, slides, updated_at, request_id FROM ppt_projects WHERE id = $1`,
       [projectId]
     );
-
-    if (result.rows.length === 0) {
+    if (projectResult.rows.length === 0) {
       return res.status(404).json({ message: "Project not found." });
     }
+    const project = projectResult.rows[0];
 
-    const project = result.rows[0];
+    // Step 2: Use the request_id to get the theme_slug
+    const requestResult = await pool.query(
+      `SELECT theme_slug FROM ppt_requests WHERE id = $1`,
+      [project.request_id]
+    );
+    if (requestResult.rows.length === 0) {
+      throw new Error(`Could not find original request for project ID ${projectId}`);
+    }
+    const themeSlug = requestResult.rows[0].theme_slug;
+    
+    // Step 3: Use the theme_slug to get the full theme details
+    const themeResult = await pool.query(
+      `SELECT background_color, primary_color, secondary_color, text_color, heading_font, body_font
+       FROM themes WHERE slug = $1`,
+      [themeSlug]
+    );
+    if (themeResult.rows.length === 0) {
+        throw new Error(`Theme with slug "${themeSlug}" not found.`);
+    }
+    const theme = themeResult.rows[0];
 
-    const slides = project.slides || null;
-
+    // Step 4: Combine project data and theme data into a single response
     res.json({
-      id: project.id,
-      status: project.status,
-      slides: slides, // Use the already-parsed object
-      updated_at: project.updated_at,
+      ...project, // Contains id, status, slides, etc.
+      theme: theme // Nests all theme properties under a 'theme' key
     });
 
   } catch (error) {
-    console.error("Error fetching project:", error);
+    console.error("Error fetching project:", error.message);
     return res.status(500).json({ message: "Server error" });
   }
 });
