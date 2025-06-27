@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import DynamicLayoutRenderer from './layouts/DynamicLayoutRenderer';
+import DynamicLayoutRenderer from './Layouts/DynamicLayoutRenderer';
 import { SmartLayoutManager } from '../../utils/SmartLayoutManager';
 import { IntelligentLayoutAnalyzer } from '../../utils/IntelligentLayoutAnalyzer';
 

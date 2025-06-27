@@ -18,8 +18,6 @@ const ThemeSelectionPage = () => {
       const res = await fetch(`http://localhost:5000/api/themes/${slug}/details`,
         {
           method: 'POST',
-          // --- CORRECTED ---
-          // Standard casing for the 'Content-Type' header.
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(requestData)
         }
@@ -122,9 +120,6 @@ const ThemeSelectionPage = () => {
 
     setIsLoading(true);
 
-    // --- CORRECTED ---
-    // This object now correctly matches what the backend expects in `req.body`.
-    // The `theme` identifier (`slug`) is passed via the URL, not the body.
     const requestData = {
       mode,
       slideCount,
@@ -134,7 +129,6 @@ const ThemeSelectionPage = () => {
     const result = await sendPptDetails(selectedTheme.slug, requestData);
 
     if (result?.projectId) {
-      // Navigate to presentation viewer instead of editor
       navigate(`/presentation/${result.projectId}`);
     } else {
       alert('Something went wrong, please try again.');

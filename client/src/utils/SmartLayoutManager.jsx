@@ -47,23 +47,36 @@ export class SmartLayoutManager {
         }
         return positions;
     }
+    
+    // UPDATED ZIG-ZAG LOGIC
     getZigZagTimelinePositions({ itemCount }) {
         const positions = { title: { x: 0.05, y: 0.02, w: 0.9, h: 0.13 } };
-        const itemHeight = Math.max(0.08, 0.8 / itemCount);
+        positions.line = { x: 0.5 - 0.0025, y: 0.2, w: 0.005, h: 0.75 };
+
+        const totalContentHeight = 0.8;
+        const itemHeight = totalContentHeight / itemCount;
+        const circleSize = Math.min(0.06, itemHeight * 0.6);
+
         for (let i = 0; i < itemCount; i++) {
-            const y = 0.15 + i * itemHeight;
-            positions[`item${i}C`] = { x: 0.46, y: y + itemHeight / 2 - 0.035, w: 0.08, h: 0.07 };
-            positions[`item${i}T`] = { x: (i % 2 === 0) ? 0.05 : 0.54, y, w: 0.4, h: itemHeight };
+            const y = 0.18 + i * itemHeight;
+            const isLeft = i % 2 === 0;
+
+            positions[`item${i}C`] = { x: 0.5 - (circleSize / 2), y: y + (itemHeight / 2) - (circleSize / 2), w: circleSize, h: circleSize };
+            positions[`item${i}T`] = { x: isLeft ? 0.05 : 0.53, y, w: 0.42, h: itemHeight };
         }
         return positions;
     }
-    getPyramidPositions({ itemCount }) { // This layout was not used in the analyzer, but keeping the logic.
+
+    // UPDATED PYRAMID LOGIC
+    getPyramidPositions({ itemCount }) {
         const positions = { title: { x: 0.05, y: 0.02, w: 0.9, h: 0.13 } };
-        const itemHeight = Math.max(0.1, 0.75 / itemCount);
+        const itemHeight = Math.max(0.1, 0.8 / itemCount);
+        const circleSize = 0.06;
+
         for (let i = 0; i < itemCount; i++) {
             const y = 0.18 + i * itemHeight;
-            positions[`item${i}C`] = { x: 0.46, y: y + itemHeight / 2 - 0.045, w: 0.08, h: 0.09 };
-            positions[`item${i}T`] = { x: 0.05, y, w: 0.8, h: itemHeight };
+            positions[`item${i}C`] = { x: 0.1, y: y + (itemHeight / 2) - (circleSize / 2), w: circleSize, h: circleSize };
+            positions[`item${i}T`] = { x: 0.2, y: y, w: 0.7, h: itemHeight };
         }
         return positions;
     }

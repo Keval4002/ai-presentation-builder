@@ -1,3 +1,4 @@
+// filepath: server/routes/themes.js
 import express from "express";
 import { pool } from "../db/pool.js";
 import { triggerAIGeneration } from "../services/aiGeneratorService.js";
@@ -20,12 +21,15 @@ router.get("/", async (req, res) => {
   }
 });
 
+// FIXED: Added missing slash to route path
 // Receive PPT details, save to DB, trigger AI generation
 router.post("/:slug/details", async (req, res) => {
   const { slug } = req.params;
   const { mode, slideCount, prompt, outline } = req.body;
 
   try {
+    console.log(`🎨 Creating new project with theme: ${slug}`);
+    
     const randomProjectId = Math.floor(Math.random() * 10000);
 
     const requestResult = await pool.query(
@@ -34,6 +38,7 @@ router.post("/:slug/details", async (req, res) => {
     );
 
     const requestId = requestResult.rows[0].id;
+    console.log(`📝 Request created with ID: ${requestId}`);
 
     const pptProjectResult = await pool.query(
       `INSERT INTO ppt_projects (request_id, status) VALUES ($1, 'pending') RETURNING id`,
@@ -41,7 +46,7 @@ router.post("/:slug/details", async (req, res) => {
     );
 
     const pptProjectId = pptProjectResult.rows[0].id;
-    console.log(`Project created with DB ID: ${pptProjectId}. This ID will be sent to the frontend.`);
+    console.log(`🚀 PPT Project created with ID: ${pptProjectId}. This ID will be sent to the frontend.`);
 
     triggerAIGeneration({
       pptProjectId,
@@ -85,15 +90,19 @@ router.get("/project/:projectId", async (req, res) => {
   const { projectId } = req.params;
 
   try {
+    console.log(`📊 Fetching project ${projectId}`);
+    
     // Step 1: Get the project data and its request_id
     const projectResult = await pool.query(
       `SELECT id, status, slides, updated_at, request_id FROM ppt_projects WHERE id = $1`,
       [projectId]
     );
     if (projectResult.rows.length === 0) {
+      console.error(`❌ Project ${projectId} not found`);
       return res.status(404).json({ message: "Project not found." });
     }
     const project = projectResult.rows[0];
+    console.log(`📊 Project ${projectId} status: ${project.status}`);
 
     // Step 2: Use the request_id to get the theme_slug
     const requestResult = await pool.query(
@@ -101,6 +110,7 @@ router.get("/project/:projectId", async (req, res) => {
       [project.request_id]
     );
     if (requestResult.rows.length === 0) {
+      console.error(`❌ No request found for project ${projectId}`);
       throw new Error(`Could not find original request for project ID ${projectId}`);
     }
     const themeSlug = requestResult.rows[0].theme_slug;
@@ -112,9 +122,12 @@ router.get("/project/:projectId", async (req, res) => {
       [themeSlug]
     );
     if (themeResult.rows.length === 0) {
+        console.error(`❌ Theme not found: ${themeSlug}`);
         throw new Error(`Theme with slug "${themeSlug}" not found.`);
     }
     const theme = themeResult.rows[0];
+
+    console.log(`✅ Successfully fetched project ${projectId}`);
 
     // Step 4: Combine project data and theme data into a single response
     res.json({

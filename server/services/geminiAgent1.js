@@ -16,21 +16,22 @@ async function geminiAgent1({ prompt, outline, slideCount, themeSlug, mode, requ
       throw new Error(`Theme "${themeSlug}" not found`);
     }
     const theme = themes.rows[0];
-    const finalPrompt = `You are a world-class presentation designer and expert content strategist. Your task is to generate the complete structure and content for a presentation that is both informative and engaging, based on user requirements and a specific visual theme.
+    const finalPrompt = `You are a world-class presentation designer and expert content strategist. Your task is to generate the complete structure and content for a presentation that is both informative and engaging, grounded in human reasoning and effective communication design, based on user requirements and a specific visual theme.
 
 **Core Task:**
 - Main Topic/Prompt: "${prompt}"
 - Total Number of Slides: ${slideCount}
 
 (✨) **Content Philosophy (Crucial):**
-- **Create a Narrative:** The presentation should tell a story. Each slide must logically flow from the previous one, building a cohesive narrative journey for the audience.
-- **Substantive Content:** The content on each slide should be insightful and valuable. Avoid superficial bullet points. The goal is to provide the audience with the core takeaways they need to understand the topic.
-- **Balanced Pacing:** Distribute the information evenly across the content slides. Avoid having one slide with very sparse text and another that is overwhelmingly dense. All 'ContentSlide' types should feel similarly weighted.
+- **Create a Narrative:** Construct a logical, story-driven flow. Each slide must smoothly transition into the next, reinforcing audience understanding and curiosity.
+- **Substantive, Human-Centric Content:** Every slide should reflect deep reasoning and clarity. Avoid shallow phrases or redundant ideas. Use human expertise to explain *why* something matters and *how* it connects to real-world scenarios.
+- **Balanced Pacing & Density:** Ensure consistent content volume across 'ContentSlide' types—no slide should feel overpacked or underdeveloped. Each should feel complete and digestible.
 
 **Visual Theme Guidelines (Strictly Adhere to This):**
 - Theme Name: "${theme.name}"
 - Style Description: "${theme.description}"
-- Key Colors: Use the feeling of Primary (${theme.primary_color}), Secondary (${theme.secondary_color}), and Background (${theme.background_color}) to inform your image suggestions.
+- Key Colors: Use the essence of Primary (${theme.primary_color}), Secondary (${theme.secondary_color}), and Background (${theme.background_color}) to influence mood and tone.
+- ❌ **Image Constraint:** Image suggestions must NOT include any embedded or overlaid text or typography.
 
 **Instructions:**
 1. Your response MUST be a single, valid JSON object. Do not include any text or explanations outside of the JSON.
@@ -38,30 +39,31 @@ async function geminiAgent1({ prompt, outline, slideCount, themeSlug, mode, requ
 3. Generate exactly ${slideCount} slide objects.
 4. The first slide must be a 'TitleSlide' and the last a 'ConclusionSlide' or 'Q&A'.
 
-5. For each slide object, provide all the following key-value pairs:
+5. For each slide object, include all the following key-value pairs:
     - "slideNumber": (Number)
     - "type": (String) Choose from: "TitleSlide", "AgendaSlide", "ContentSlide", "ConclusionSlide", "Q&A".
-    - "header": (String) A short, consistent header. Often the main presentation title.
-    - "title": (String) The main, impactful title for the slide.
-    
-    (✨) - "content": (String) This is the text the audience will read on the slide. Use markdown-style bullet points. For each bullet:
-        - Start with a **bolded concept or label**.
-        - Follow it with a **concise yet comprehensive explanation (1-2 detailed sentences)** that provides real value and insight. This text should be professional and well-written, able to stand on its own.
-        - **Aim for 3-5 comprehensive bullet points** for each 'ContentSlide' to ensure a well-balanced layout.
-        - **Example of good depth:** "- **Strategic Keyword Integration**: We don't just add keywords; we weave them naturally into your site's copy and metadata. This improves search rankings while maintaining a high-quality user experience."
-        
-    (✨) - "speakerNotes": (String) A detailed, human-like script for the presenter. This is where you expand *significantly* on the slide's bullet points. The content on the slide is the 'what'; the speaker notes are the 'why' and 'how'. Include anecdotes, deeper explanations, transitions to the next slide, or questions for the audience. This should sound like a natural, confident speaker.
-    
-    - "footer": (String) Consistent footer text (e.g., company name or event title).
-    
+    - "header": (String) A short, persistent header (usually the topic or session name).
+    - "title": (String) An impactful, slide-specific title summarizing the key idea.
+
+    (✨) - "content": (String) Audience-visible slide text in markdown-style bullet points:
+        - Begin each bullet with a **bolded concept or term**.
+        - Follow it with 1–2 clear, information-rich sentences that add original insight.
+        - Focus on meaningful takeaways over generic advice.
+        - Aim for 3–5 bullets per 'ContentSlide' to maintain structure and readability.
+
+    (✨) - "speakerNotes": (String) A comprehensive speaker script expanding on the slide’s bullets.
+        - This is where you explain the reasoning, give practical context, transition smoothly, or even pose questions to the audience.
+        - The tone should be confident, natural, and audience-aware, simulating how a knowledgeable human would speak and think through the slide.
+
+    - "footer": (String) Consistent footer text for all slides (e.g., organization, campaign name, or author).
+
     - "imageSuggestion": (Object)
-        - "description": (String) A vivid, detailed prompt for an image generation AI. **It must incorporate the mood, style, and colors of the chosen theme.** Think like an art director.
-        - "style": (String) The suggested style for the image (e.g., "photorealistic", "cinematic", "minimalist vector art", "data visualization graph").
+        - "description": (String) A highly visual prompt that reflects the mood, tone, and theme colors — without any visible text or lettering. Describe scenes, objects, or compositions relevant to the slide’s idea.
+        - "style": (String) Choose from: "photorealistic", "cinematic", "minimalist vector art", "data visualization graph", "abstract shapes", "isometric illustration", etc.
 
-6. Do not include any backticks, json markers, code fences, Markdown formatting, or extra text — only return a raw JSON object.
+6. Do not include any backticks, JSON markers, code fences, Markdown formatting, or extra text — only return a raw JSON object.
 
-⚠ Your response will be fed directly to a parser. If it is not valid JSON, it will fail.
-`.trim();
+⚠ Your response will be fed directly to a parser. If it is not valid JSON, it will fail.`.trim();
 
     let rawResponse = await callLLM({ model: "gemini-2.0-flash", prompt: finalPrompt, apiType: "gemini" });
     rawResponse = rawResponse.replace(/```json/g, "").replace(/```/g, "").trim();

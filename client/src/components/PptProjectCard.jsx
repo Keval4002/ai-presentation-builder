@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MoreVertical, Trash2, RotateCcw, Trash } from 'lucide-react';
 
-function ProjectCard({ imageUrl, title, lastModified, status, onDelete, onRestore, onPermanentDelete }) {
+function ProjectCard({ imageUrl, title, lastModified, status, onDelete, onRestore, onPermanentDelete, onOpen }) {
   const [showMenu, setShowMenu] = useState(false);
   const [isMenuAnimating, setIsMenuAnimating] = useState(false);
   const menuRef = useRef();
@@ -36,7 +36,8 @@ function ProjectCard({ imageUrl, title, lastModified, status, onDelete, onRestor
     setTimeout(() => setShowMenu(false), 150);
   };
 
-  const toggleMenu = () => {
+  const toggleMenu = (e) => {
+    e.stopPropagation(); // Prevent card click when clicking menu button
     if (showMenu) {
       closeMenu();
     } else {
@@ -44,14 +45,24 @@ function ProjectCard({ imageUrl, title, lastModified, status, onDelete, onRestor
     }
   };
 
-  const handleMenuAction = (action) => {
+  const handleMenuAction = (action, e) => {
+    e.stopPropagation(); // Prevent card click when clicking menu items
     closeMenu();
     // Small delay to allow menu to close before action
     setTimeout(() => action?.(), 100);
   };
 
+  const handleCardClick = () => {
+    if (!showMenu && onOpen) {
+      onOpen();
+    }
+  };
+
   return (
-    <div className="group w-full rounded-lg overflow-hidden border border-gray-200 bg-white hover:shadow-lg transition-all duration-300 ease-in-out relative overflow-visible">
+    <div 
+      className="group w-full rounded-lg overflow-hidden border border-gray-200 bg-white hover:shadow-lg transition-all duration-300 ease-in-out relative overflow-visible cursor-pointer"
+      onClick={handleCardClick}
+    >
       
       {/* Card Cover */}
       <div className="relative w-full aspect-video h-48 bg-gray-100">
@@ -109,7 +120,7 @@ function ProjectCard({ imageUrl, title, lastModified, status, onDelete, onRestor
                 {status === 'active' ? (
                   <button
                     className="w-full text-left px-4 py-3 text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors duration-150 flex items-center gap-3 group"
-                    onClick={() => handleMenuAction(onDelete)}
+                    onClick={(e) => handleMenuAction(onDelete, e)}
                   >
                     <Trash2 size={16} className="text-gray-400 group-hover:text-red-500" />
                     <span className="font-medium">Move to Trash</span>
@@ -118,7 +129,7 @@ function ProjectCard({ imageUrl, title, lastModified, status, onDelete, onRestor
                   <>
                     <button
                       className="w-full text-left px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-150 flex items-center gap-3 group"
-                      onClick={() => handleMenuAction(onRestore)}
+                      onClick={(e) => handleMenuAction(onRestore, e)}
                     >
                       <RotateCcw size={16} className="text-gray-400 group-hover:text-blue-500" />
                       <span className="font-medium">Restore</span>
@@ -126,7 +137,7 @@ function ProjectCard({ imageUrl, title, lastModified, status, onDelete, onRestor
                     <div className="h-px bg-gray-100 mx-2"></div>
                     <button
                       className="w-full text-left px-4 py-3 text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors duration-150 flex items-center gap-3 group"
-                      onClick={() => handleMenuAction(onPermanentDelete)}
+                      onClick={(e) => handleMenuAction(onPermanentDelete, e)}
                     >
                       <Trash size={16} className="text-gray-400 group-hover:text-red-500" />
                       <span className="font-medium">Delete Forever</span>
